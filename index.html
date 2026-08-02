@@ -9,7 +9,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1.0"
   >
-  <title>True Count - Bet Ramp Color Flashes</title>
+  <title>True Count - Four Column BET</title>
 
   <style>
     * {
@@ -197,41 +197,28 @@
       color: #aaa;
     }
 
+    .running-value-wrap {
+      position: relative;
+      display: inline-block;
+      min-width: 72px;
+    }
+
+    /* Small flash box centered only around the RUNNING value. */
     .gesture-flash {
       position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding-top: 25px;
-      border: 12px solid transparent;
-      font-size: 30px;
-      font-weight: 700;
-      letter-spacing: 3px;
+      inset: -10px -8px;
+      border: 5px solid transparent;
+      border-radius: 10px;
+      background: transparent;
       opacity: 0;
       pointer-events: none;
+      font-size: 0;
     }
 
     .gesture-flash.show {
-      opacity: 1;
-    }
-
-    .gesture-flash.flash-positive {
-      border-color: #00ff66;
-      background: rgba(0, 255, 102, 0.18);
-      color: #00ff66;
-    }
-
-    .gesture-flash.flash-negative {
-      border-color: #ff3333;
-      background: rgba(255, 51, 51, 0.18);
-      color: #ff3333;
-    }
-
-    .gesture-flash.flash-neutral {
       border-color: #fff;
       background: rgba(255, 255, 255, 0.12);
-      color: #fff;
+      opacity: 1;
     }
   </style>
 </head>
@@ -319,12 +306,19 @@
 
       <section class="value-panel">
         <div class="value-label">RUNNING</div>
-        <div id="runningCount" class="value">0</div>
+        <div class="running-value-wrap">
+          <div id="runningCount" class="value">0</div>
+          <div
+            id="gestureFlash"
+            class="gesture-flash"
+            aria-hidden="true"
+          ></div>
+        </div>
       </section>
 
       <section class="value-panel">
         <div class="value-label">BET</div>
-        <div id="betAmount" class="value">$15</div>
+        <div id="betAmount" class="value">$0</div>
       </section>
 
       <section class="value-panel">
@@ -336,14 +330,9 @@
     <div class="counter-footer">
       Right: +1 &nbsp; Left: −1<br>
       Down: neutral &nbsp; Tap: reset<br>
-      <span class="layout-version">BET RAMP + COLOR FLASH</span>
+      <span class="layout-version">4-COLUMN BET</span>
     </div>
 
-    <div
-      id="gestureFlash"
-      class="gesture-flash"
-      aria-hidden="true"
-    ></div>
   </main>
 
   <script>
@@ -471,25 +460,10 @@
       markStepChanged();
     }
 
-    function flashGesture(message, tone) {
+    function flashGesture(message) {
       clearTimeout(flashTimer);
-
       gestureFlash.textContent = message;
-      gestureFlash.classList.remove(
-        "show",
-        "flash-positive",
-        "flash-negative",
-        "flash-neutral"
-      );
-
-      if (tone === "positive") {
-        gestureFlash.classList.add("flash-positive");
-      } else if (tone === "negative") {
-        gestureFlash.classList.add("flash-negative");
-      } else {
-        gestureFlash.classList.add("flash-neutral");
-      }
-
+      gestureFlash.classList.remove("show");
       void gestureFlash.offsetWidth;
       gestureFlash.classList.add("show");
 
@@ -499,41 +473,19 @@
     }
 
     function calculateBetAmount(trueCount) {
-      /*
-        Classroom example: a capped 1-to-8 unit betting ramp.
-        This is more realistic than multiplying the minimum by
-        the decimal true count, but it is not a universal strategy.
-
-        TC below +2: 1 unit
-        TC +2:       2 units
-        TC +3:       4 units
-        TC +4:       6 units
-        TC +5+:      8 units
-      */
-      if (trueCount === null) {
-        return selectedMinimum;
+      if (trueCount === null || trueCount <= 0) {
+        return 0;
       }
 
-      const wholeTrueCount = Math.floor(trueCount);
-      let units = 1;
+      // Use the same one-decimal value shown in the TRUE column.
+      const displayedTrueCount =
+        Number(trueCount.toFixed(1));
 
-      if (wholeTrueCount >= 5) {
-        units = 8;
-      } else if (wholeTrueCount === 4) {
-        units = 6;
-      } else if (wholeTrueCount === 3) {
-        units = 4;
-      } else if (wholeTrueCount === 2) {
-        units = 2;
-      }
+      const rawBet =
+        selectedMinimum * displayedTrueCount;
 
-      const rawBet = selectedMinimum * units;
-
-      // Preserve $5 increments for any future minimum options.
-      return Math.max(
-        selectedMinimum,
-        Math.round(rawBet / 5) * 5
-      );
+      // Keep the demonstration amount in $5 increments.
+      return Math.max(0, Math.round(rawBet / 5) * 5);
     }
 
     function updateCounterDisplay() {
@@ -647,21 +599,21 @@
     function handleCounterInput(key) {
       if (key === "ArrowRight") {
         if (recordCard(1)) {
-          flashGesture("+1", "positive");
+          flashGesture("+1");
         }
         return true;
       }
 
       if (key === "ArrowLeft") {
         if (recordCard(-1)) {
-          flashGesture("−1", "negative");
+          flashGesture("−1");
         }
         return true;
       }
 
       if (key === "ArrowDown") {
         if (recordCard(0)) {
-          flashGesture("NEUTRAL", "neutral");
+          flashGesture("NEUTRAL");
         }
         return true;
       }
