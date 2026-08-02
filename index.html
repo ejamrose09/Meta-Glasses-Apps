@@ -220,6 +220,16 @@
       background: rgba(255, 255, 255, 0.12);
       opacity: 1;
     }
+
+    .gesture-flash.show.positive {
+      border-color: #00c853;
+      background: rgba(0, 200, 83, 0.18);
+    }
+
+    .gesture-flash.show.negative {
+      border-color: #ff1744;
+      background: rgba(255, 23, 68, 0.18);
+    }
   </style>
 </head>
 
@@ -460,15 +470,22 @@
       markStepChanged();
     }
 
-    function flashGesture(message) {
+    function flashGesture(message, colorType) {
       clearTimeout(flashTimer);
       gestureFlash.textContent = message;
-      gestureFlash.classList.remove("show");
+      gestureFlash.classList.remove("show", "positive", "negative");
+
+      if (colorType === "positive") {
+        gestureFlash.classList.add("positive");
+      } else if (colorType === "negative") {
+        gestureFlash.classList.add("negative");
+      }
+
       void gestureFlash.offsetWidth;
       gestureFlash.classList.add("show");
 
       flashTimer = setTimeout(function () {
-        gestureFlash.classList.remove("show");
+        gestureFlash.classList.remove("show", "positive", "negative");
       }, 300);
     }
 
@@ -513,7 +530,7 @@
     }
 
     function startCounter() {
-      totalCards = selectedDecks * 52;
+      totalCards = selectedDecks * 37;
       runningCount = 0;
       cardsDealt = 0;
       currentScreen = "counter";
@@ -599,14 +616,14 @@
     function handleCounterInput(key) {
       if (key === "ArrowRight") {
         if (recordCard(1)) {
-          flashGesture("+1");
+          flashGesture("+1", "positive");
         }
         return true;
       }
 
       if (key === "ArrowLeft") {
         if (recordCard(-1)) {
-          flashGesture("−1");
+          flashGesture("−1", "negative");
         }
         return true;
       }
