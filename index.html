@@ -2,16 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>Simple Counter</title>
+  <title>True Count</title>
 
   <style>
     * {
       box-sizing: border-box;
+    }
+
+    [hidden] {
+      display: none !important;
     }
 
     html,
@@ -29,108 +34,442 @@
       outline: none;
     }
 
-    .display {
+    .screen {
       width: 600px;
       height: 600px;
       max-width: 100vw;
       max-height: 100vh;
+      margin: auto;
+      padding: 45px;
 
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
 
-      margin: auto;
       text-align: center;
     }
 
-    .label {
-      margin-bottom: 18px;
-      font-size: 34px;
-      font-weight: 700;
-      letter-spacing: 8px;
+    h1 {
+      margin: 0 0 45px;
+      font-size: 42px;
+      letter-spacing: 4px;
     }
 
-    #count {
-      font-size: 210px;
+    .deck-options {
+      display: flex;
+      gap: 35px;
+    }
+
+    .deck-option {
+      width: 180px;
+      height: 180px;
+
+      border: 5px solid #777;
+      border-radius: 25px;
+
+      background: #111;
+      color: #fff;
+
+      font-size: 76px;
+      font-weight: 700;
+    }
+
+    .deck-option.selected,
+    .deck-option:focus {
+      border-color: #fff;
+      background: #333;
+      outline: none;
+    }
+
+    .deck-label {
+      display: block;
+      margin-top: 8px;
+      font-size: 20px;
+      font-weight: 400;
+    }
+
+    .selection-help {
+      margin-top: 45px;
+      font-size: 22px;
+      line-height: 1.5;
+      color: #ddd;
+    }
+
+    .counter-header {
+      width: 100%;
+
+      display: flex;
+      justify-content: space-between;
+
+      font-size: 21px;
+      color: #ddd;
+    }
+
+    .main-values {
+      flex: 1;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 65px;
+    }
+
+    .value-panel {
+      min-width: 190px;
+    }
+
+    .value-label {
+      margin-bottom: 12px;
+
+      font-size: 23px;
+      font-weight: 700;
+      letter-spacing: 3px;
+    }
+
+    .value {
+      font-size: 112px;
       font-weight: 700;
       line-height: 1;
     }
 
-    .instructions {
-      margin-top: 55px;
-      font-size: 22px;
-      line-height: 1.7;
+    #trueCount {
+      font-size: 90px;
+    }
+
+    .counter-footer {
+      width: 100%;
+
+      display: flex;
+      justify-content: space-between;
+
+      font-size: 19px;
+      color: #ddd;
+    }
+
+    #status {
+      margin-top: 25px;
+      min-height: 48px;
+
+      font-size: 19px;
+      line-height: 1.4;
       color: #ddd;
     }
   </style>
 </head>
 
 <body tabindex="0">
-  <main class="display">
-    <div class="label">COUNT</div>
 
-    <div id="count" aria-live="polite">0</div>
+  <!-- Deck-selection screen -->
+  <main id="selectionScreen" class="screen">
+    <h1># OF DECKS</h1>
 
-    <div class="instructions">
-      Swipe right: +1<br>
-      Swipe left: -1<br>
-      Index pinch: reset
+    <div class="deck-options">
+      <button
+        class="deck-option focusable selected"
+        data-decks="2"
+        type="button"
+        aria-pressed="true"
+      >
+        2
+        <span class="deck-label">DECKS</span>
+      </button>
+
+      <button
+        class="deck-option focusable"
+        data-decks="6"
+        type="button"
+        aria-pressed="false"
+      >
+        6
+        <span class="deck-label">DECKS</span>
+      </button>
+    </div>
+
+    <div class="selection-help">
+      Left or right to select<br>
+      Index tap to start
+    </div>
+  </main>
+
+  <!-- Counter screen -->
+  <main id="counterScreen" class="screen" hidden>
+    <div class="counter-header">
+      <span><strong id="deckCount">2</strong> decks</span>
+      <span>Remaining: <strong id="decksRemaining">2.00</strong></span>
+    </div>
+
+    <div class="main-values">
+      <section class="value-panel">
+        <div class="value-label">RUNNING</div>
+        <div id="runningCount" class="value">0</div>
+      </section>
+
+      <section class="value-panel">
+        <div class="value-label">TRUE</div>
+        <div id="trueCount" class="value">0.0</div>
+      </section>
+    </div>
+
+    <div class="counter-footer">
+      <span>Cards: <strong id="cardsDealt">0 / 104</strong></span>
+      <span>Tap: reset</span>
+    </div>
+
+    <div id="status">
+      Right: +1 &nbsp; Left: -1 &nbsp; Down: neutral
     </div>
   </main>
 
   <script>
-    let count = 0;
+    "use strict";
 
-    const countDisplay = document.getElementById("count");
+    let selectedDecks = 2;
+    let totalCards = selectedDecks * 52;
 
-    function updateDisplay() {
-      countDisplay.textContent = count;
+    let runningCount = 0;
+    let cardsDealt = 0;
+    let screen = "selection";
+
+    const selectionScreen =
+      document.getElementById("selectionScreen");
+
+    const counterScreen =
+      document.getElementById("counterScreen");
+
+    const deckOptions =
+      document.querySelectorAll(".deck-option");
+
+    const deckCountDisplay =
+      document.getElementById("deckCount");
+
+    const runningCountDisplay =
+      document.getElementById("runningCount");
+
+    const trueCountDisplay =
+      document.getElementById("trueCount");
+
+    const decksRemainingDisplay =
+      document.getElementById("decksRemaining");
+
+    const cardsDealtDisplay =
+      document.getElementById("cardsDealt");
+
+    const statusDisplay =
+      document.getElementById("status");
+
+    function formatSignedNumber(value, decimalPlaces) {
+      if (Math.abs(value) < 0.0001) {
+        value = 0;
+      }
+
+      const formatted = value.toFixed(decimalPlaces);
+
+      if (value > 0) {
+        return "+" + formatted;
+      }
+
+      return formatted;
     }
 
-    function resetCounter() {
-      count = 0;
-      updateDisplay();
+    function updateDeckSelection() {
+      deckOptions.forEach(function (button) {
+        const buttonDecks =
+          Number(button.dataset.decks);
+
+        const isSelected =
+          buttonDecks === selectedDecks;
+
+        button.classList.toggle(
+          "selected",
+          isSelected
+        );
+
+        button.setAttribute(
+          "aria-pressed",
+          String(isSelected)
+        );
+
+        if (isSelected) {
+          button.focus({
+            preventScroll: true
+          });
+        }
+      });
     }
 
-    document.addEventListener("keydown", function (event) {
-      // Prevent one held keyboard key from changing the count repeatedly.
-      if (event.repeat) {
+    function updateCounterDisplay() {
+      const remainingCards =
+        Math.max(totalCards - cardsDealt, 0);
+
+      const decksRemaining =
+        remainingCards / 52;
+
+      let trueCount = null;
+
+      if (decksRemaining > 0) {
+        trueCount =
+          runningCount / decksRemaining;
+      }
+
+      deckCountDisplay.textContent =
+        selectedDecks;
+
+      runningCountDisplay.textContent =
+        formatSignedNumber(runningCount, 0);
+
+      trueCountDisplay.textContent =
+        trueCount === null
+          ? "—"
+          : formatSignedNumber(trueCount, 1);
+
+      decksRemainingDisplay.textContent =
+        decksRemaining.toFixed(2);
+
+      cardsDealtDisplay.textContent =
+        cardsDealt + " / " + totalCards;
+
+      if (remainingCards === 0) {
+        statusDisplay.textContent =
+          "Shoe complete. Index tap to reset.";
+      } else {
+        statusDisplay.innerHTML =
+          "Right: +1 &nbsp; Left: −1 &nbsp; Down: neutral";
+      }
+    }
+
+    function startCounter() {
+      totalCards = selectedDecks * 52;
+      runningCount = 0;
+      cardsDealt = 0;
+      screen = "counter";
+
+      selectionScreen.hidden = true;
+      counterScreen.hidden = false;
+
+      updateCounterDisplay();
+      document.body.focus();
+    }
+
+    function resetShoe() {
+      runningCount = 0;
+      cardsDealt = 0;
+
+      updateCounterDisplay();
+    }
+
+    function recordCard(countValue) {
+      if (cardsDealt >= totalCards) {
         return;
       }
 
-      switch (event.key) {
-        case "ArrowRight":
-          count += 1;
-          break;
+      runningCount += countValue;
+      cardsDealt += 1;
 
+      updateCounterDisplay();
+    }
+
+    function handleSelectionInput(key) {
+      switch (key) {
         case "ArrowLeft":
-          count -= 1;
-          break;
+          selectedDecks = 2;
+          updateDeckSelection();
+          return true;
+
+        case "ArrowRight":
+          selectedDecks = 6;
+          updateDeckSelection();
+          return true;
 
         case "Enter":
-          resetCounter();
-          event.preventDefault();
-          return;
+          startCounter();
+          return true;
 
         default:
-          return;
+          return false;
       }
+    }
 
-      updateDisplay();
-      event.preventDefault();
+    function handleCounterInput(key) {
+      switch (key) {
+        case "ArrowRight":
+          recordCard(1);
+          return true;
+
+        case "ArrowLeft":
+          recordCard(-1);
+          return true;
+
+        case "ArrowDown":
+          recordCard(0);
+          return true;
+
+        case "Enter":
+          resetShoe();
+          return true;
+
+        default:
+          return false;
+      }
+    }
+
+    document.addEventListener(
+      "keydown",
+      function (event) {
+        if (event.repeat) {
+          return;
+        }
+
+        let handled = false;
+
+        if (screen === "selection") {
+          handled =
+            handleSelectionInput(event.key);
+        } else {
+          handled =
+            handleCounterInput(event.key);
+        }
+
+        if (handled) {
+          event.preventDefault();
+        }
+      }
+    );
+
+    deckOptions.forEach(function (button) {
+      button.addEventListener(
+        "click",
+        function () {
+          selectedDecks =
+            Number(button.dataset.decks);
+
+          updateDeckSelection();
+          startCounter();
+        }
+      );
     });
 
-    window.addEventListener("load", function () {
-      // Always initialize at zero whenever the app starts.
-      resetCounter();
-      document.body.focus();
-    });
+    document.addEventListener(
+      "click",
+      function () {
+        if (screen === "counter") {
+          document.body.focus();
+        }
+      }
+    );
 
-    // Helps keyboard testing in a desktop browser.
-    document.addEventListener("click", function () {
-      document.body.focus();
-    });
+    window.addEventListener(
+      "load",
+      function () {
+        selectedDecks = 2;
+        screen = "selection";
+
+        selectionScreen.hidden = false;
+        counterScreen.hidden = true;
+
+        updateDeckSelection();
+      }
+    );
   </script>
 </body>
 </html>
