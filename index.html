@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Simple Counter</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      overflow: hidden;
+      outline: none;
+    }
+
+    .display {
+      width: 600px;
+      height: 600px;
+      max-width: 100vw;
+      max-height: 100vh;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      margin: auto;
+      text-align: center;
+    }
+
+    .label {
+      margin-bottom: 18px;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: 8px;
+    }
+
+    #count {
+      font-size: 210px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .instructions {
+      margin-top: 55px;
+      font-size: 22px;
+      line-height: 1.7;
+      color: #ddd;
+    }
+  </style>
+</head>
+
+<body tabindex="0">
+  <main class="display">
+    <div class="label">COUNT</div>
+
+    <div id="count" aria-live="polite">0</div>
+
+    <div class="instructions">
+      Swipe right: +1<br>
+      Swipe left: -1<br>
+      Index pinch: reset
+    </div>
+  </main>
+
+  <script>
+    let count = 0;
+
+    const countDisplay = document.getElementById("count");
+
+    function updateDisplay() {
+      countDisplay.textContent = count;
+    }
+
+    function resetCounter() {
+      count = 0;
+      updateDisplay();
+    }
+
+    document.addEventListener("keydown", function (event) {
+      // Prevent one held keyboard key from changing the count repeatedly.
+      if (event.repeat) {
+        return;
+      }
+
+      switch (event.key) {
+        case "ArrowRight":
+          count += 1;
+          break;
+
+        case "ArrowLeft":
+          count -= 1;
+          break;
+
+        case "Enter":
+          resetCounter();
+          event.preventDefault();
+          return;
+
+        default:
+          return;
+      }
+
+      updateDisplay();
+      event.preventDefault();
+    });
+
+    window.addEventListener("load", function () {
+      // Always initialize at zero whenever the app starts.
+      resetCounter();
+      document.body.focus();
+    });
+
+    // Helps keyboard testing in a desktop browser.
+    document.addEventListener("click", function () {
+      document.body.focus();
+    });
+  </script>
+</body>
+</html>
