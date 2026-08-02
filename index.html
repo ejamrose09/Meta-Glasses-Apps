@@ -123,9 +123,9 @@
       width: 100%;
       flex: 1;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .value-panel {
@@ -141,14 +141,23 @@
     }
 
     .value {
-      font-size: 64px;
+      font-size: 50px;
       font-weight: 700;
       line-height: 1;
       white-space: nowrap;
     }
 
     #cardsDealt {
-      transform: scaleX(0.75);
+      transform: scaleX(0.68);
+    }
+
+    #betAmount {
+      font-size: 46px;
+      transform: scaleX(0.90);
+    }
+
+    #trueCount {
+      transform: scaleX(0.85);
     }
 
     .counter-footer {
@@ -268,6 +277,11 @@
       </section>
 
       <section class="value-panel">
+        <div class="value-label">BET</div>
+        <div id="betAmount" class="value">$0</div>
+      </section>
+
+      <section class="value-panel">
         <div class="value-label">TRUE</div>
         <div id="trueCount" class="value">0.0</div>
       </section>
@@ -335,6 +349,9 @@
 
     const trueCountDisplay =
       document.getElementById("trueCount");
+
+    const betAmountDisplay =
+      document.getElementById("betAmount");
 
     const decksRemainingDisplay =
       document.getElementById("decksRemaining");
@@ -413,6 +430,22 @@
       }, 300);
     }
 
+    function calculateBetAmount(trueCount) {
+      if (trueCount === null || trueCount <= 0) {
+        return 0;
+      }
+
+      // Use the same one-decimal value shown in the TRUE column.
+      const displayedTrueCount =
+        Number(trueCount.toFixed(1));
+
+      const rawBet =
+        selectedMinimum * displayedTrueCount;
+
+      // Keep the demonstration amount in $5 increments.
+      return Math.max(0, Math.round(rawBet / 5) * 5);
+    }
+
     function updateCounterDisplay() {
       const remainingCards =
         Math.max(totalCards - cardsDealt, 0);
@@ -421,6 +454,7 @@
       const trueCount = decksRemaining > 0
         ? runningCount / decksRemaining
         : null;
+      const betAmount = calculateBetAmount(trueCount);
 
       deckCountDisplay.textContent = selectedDecks;
       tableMinimumDisplay.textContent = "$" + selectedMinimum;
@@ -428,6 +462,7 @@
         cardsDealt + "/" + totalCards;
       runningCountDisplay.textContent =
         formatSignedNumber(runningCount, 0);
+      betAmountDisplay.textContent = "$" + betAmount;
       trueCountDisplay.textContent = trueCount === null
         ? "—"
         : formatSignedNumber(trueCount, 1);
