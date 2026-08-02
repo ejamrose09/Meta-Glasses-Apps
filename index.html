@@ -60,12 +60,12 @@
       letter-spacing: 4px;
     }
 
-    .deck-options {
+    .selection-options {
       display: flex;
       gap: 35px;
     }
 
-    .deck-option {
+    .selection-option {
       width: 180px;
       height: 180px;
 
@@ -79,14 +79,14 @@
       font-weight: 700;
     }
 
-    .deck-option.selected,
-    .deck-option:focus {
+    .selection-option.selected,
+    .selection-option:focus {
       border-color: #fff;
       background: #333;
       outline: none;
     }
 
-    .deck-label {
+    .option-label {
       display: block;
       margin-top: 8px;
       font-size: 20px;
@@ -190,28 +190,60 @@
 <body tabindex="0">
 
   <!-- Deck-selection screen -->
-  <main id="selectionScreen" class="screen">
+  <main id="deckSelectionScreen" class="screen">
     <h1># OF DECKS</h1>
 
-    <div class="deck-options">
+    <div class="selection-options">
       <button
-        class="deck-option focusable selected"
+        class="selection-option deck-option focusable selected"
         data-decks="2"
         type="button"
         aria-pressed="true"
       >
         2
-        <span class="deck-label">DECKS</span>
+        <span class="option-label">DECKS</span>
       </button>
 
       <button
-        class="deck-option focusable"
+        class="selection-option deck-option focusable"
         data-decks="6"
         type="button"
         aria-pressed="false"
       >
         6
-        <span class="deck-label">DECKS</span>
+        <span class="option-label">DECKS</span>
+      </button>
+    </div>
+
+    <div class="selection-help">
+      Left or right to select<br>
+      Index tap to continue
+    </div>
+  </main>
+
+  <!-- Table-minimum selection screen -->
+  <main id="minimumSelectionScreen" class="screen" hidden>
+    <h1>TABLE MINIMUM</h1>
+
+    <div class="selection-options">
+      <button
+        class="selection-option minimum-option focusable selected"
+        data-minimum="15"
+        type="button"
+        aria-pressed="true"
+      >
+        $15
+        <span class="option-label">MINIMUM</span>
+      </button>
+
+      <button
+        class="selection-option minimum-option focusable"
+        data-minimum="25"
+        type="button"
+        aria-pressed="false"
+      >
+        $25
+        <span class="option-label">MINIMUM</span>
       </button>
     </div>
 
@@ -225,6 +257,8 @@
   <main id="counterScreen" class="screen" hidden>
     <div class="counter-header">
       <span><strong id="deckCount">2</strong> decks</span>
+
+      <span>Minimum: <strong id="tableMinimum">$15</strong></span>
 
       <span>
         Remaining:
@@ -265,15 +299,19 @@
     "use strict";
 
     let selectedDecks = 2;
+    let selectedMinimum = 15;
     let totalCards = selectedDecks * 52;
 
     let runningCount = 0;
     let cardsDealt = 0;
-    let currentScreen = "selection";
+    let currentScreen = "deck-selection";
     let flashTimer = null;
 
-    const selectionScreen =
-      document.getElementById("selectionScreen");
+    const deckSelectionScreen =
+      document.getElementById("deckSelectionScreen");
+
+    const minimumSelectionScreen =
+      document.getElementById("minimumSelectionScreen");
 
     const counterScreen =
       document.getElementById("counterScreen");
@@ -281,8 +319,14 @@
     const deckOptions =
       document.querySelectorAll(".deck-option");
 
+    const minimumOptions =
+      document.querySelectorAll(".minimum-option");
+
     const deckCountDisplay =
       document.getElementById("deckCount");
+
+    const tableMinimumDisplay =
+      document.getElementById("tableMinimum");
 
     const runningCountDisplay =
       document.getElementById("runningCount");
@@ -358,6 +402,40 @@
       });
     }
 
+    function updateMinimumSelection() {
+      minimumOptions.forEach(function (button) {
+        const buttonMinimum =
+          Number(button.dataset.minimum);
+
+        const isSelected =
+          buttonMinimum === selectedMinimum;
+
+        button.classList.toggle(
+          "selected",
+          isSelected
+        );
+
+        button.setAttribute(
+          "aria-pressed",
+          String(isSelected)
+        );
+
+        if (isSelected) {
+          button.focus({
+            preventScroll: true
+          });
+        }
+      });
+    }
+
+    function showMinimumSelection() {
+      currentScreen = "minimum-selection";
+      deckSelectionScreen.hidden = true;
+      minimumSelectionScreen.hidden = false;
+      counterScreen.hidden = true;
+      updateMinimumSelection();
+    }
+
     function updateCounterDisplay() {
       const remainingCards =
         Math.max(totalCards - cardsDealt, 0);
@@ -374,6 +452,9 @@
 
       deckCountDisplay.textContent =
         selectedDecks;
+
+      tableMinimumDisplay.textContent =
+        "$" + selectedMinimum;
 
       cardsDealtDisplay.textContent =
         cardsDealt + "/" + totalCards;
@@ -396,7 +477,8 @@
       cardsDealt = 0;
       currentScreen = "counter";
 
-      selectionScreen.hidden = true;
+      deckSelectionScreen.hidden = true;
+      minimumSelectionScreen.hidden = true;
       counterScreen.hidden = false;
 
       updateCounterDisplay();
@@ -426,7 +508,7 @@
       return true;
     }
 
-    function handleSelectionInput(key) {
+    function handleDeckSelectionInput(key) {
       switch (key) {
         case "ArrowLeft":
           selectedDecks = 2;
@@ -436,6 +518,27 @@
         case "ArrowRight":
           selectedDecks = 6;
           updateDeckSelection();
+          return true;
+
+        case "Enter":
+          showMinimumSelection();
+          return true;
+
+        default:
+          return false;
+      }
+    }
+
+    function handleMinimumSelectionInput(key) {
+      switch (key) {
+        case "ArrowLeft":
+          selectedMinimum = 15;
+          updateMinimumSelection();
+          return true;
+
+        case "ArrowRight":
+          selectedMinimum = 25;
+          updateMinimumSelection();
           return true;
 
         case "Enter":
@@ -485,9 +588,12 @@
 
         let handled = false;
 
-        if (currentScreen === "selection") {
+        if (currentScreen === "deck-selection") {
           handled =
-            handleSelectionInput(event.key);
+            handleDeckSelectionInput(event.key);
+        } else if (currentScreen === "minimum-selection") {
+          handled =
+            handleMinimumSelectionInput(event.key);
         } else {
           handled =
             handleCounterInput(event.key);
@@ -507,6 +613,19 @@
             Number(button.dataset.decks);
 
           updateDeckSelection();
+          showMinimumSelection();
+        }
+      );
+    });
+
+    minimumOptions.forEach(function (button) {
+      button.addEventListener(
+        "click",
+        function () {
+          selectedMinimum =
+            Number(button.dataset.minimum);
+
+          updateMinimumSelection();
           startCounter();
         }
       );
@@ -525,9 +644,11 @@
       "load",
       function () {
         selectedDecks = 2;
-        currentScreen = "selection";
+        selectedMinimum = 15;
+        currentScreen = "deck-selection";
 
-        selectionScreen.hidden = false;
+        deckSelectionScreen.hidden = false;
+        minimumSelectionScreen.hidden = true;
         counterScreen.hidden = true;
 
         updateDeckSelection();
