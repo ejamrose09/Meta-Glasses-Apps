@@ -2,12 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
   >
-
   <title>True Count</title>
 
   <style>
@@ -36,84 +34,94 @@
 
     .screen {
       position: relative;
-
       width: 600px;
       height: 600px;
       max-width: 100vw;
       max-height: 100vh;
-
       margin: auto;
-      padding: 32px;
-
+      padding: 24px 30px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-
       text-align: center;
       overflow: hidden;
     }
 
     h1 {
-      margin: 0 0 45px;
-      font-size: 42px;
+      margin: 0 0 20px;
+      font-size: 34px;
       letter-spacing: 4px;
+    }
+
+    .setup-section {
+      width: 100%;
+      padding: 10px 0;
+      opacity: 0.38;
+      transition: opacity 120ms ease;
+    }
+
+    .setup-section.active {
+      opacity: 1;
+    }
+
+    .setup-label {
+      margin-bottom: 8px;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 2px;
     }
 
     .selection-options {
       display: flex;
-      gap: 35px;
+      justify-content: center;
+      gap: 24px;
     }
 
     .selection-option {
-      width: 180px;
-      height: 180px;
-
-      border: 5px solid #777;
-      border-radius: 25px;
-
+      width: 150px;
+      height: 105px;
+      border: 4px solid #666;
+      border-radius: 20px;
       background: #111;
       color: #fff;
-
-      font-size: 76px;
+      font-size: 52px;
       font-weight: 700;
+      line-height: 1;
+      outline: none;
     }
 
-    .selection-option.selected,
-    .selection-option:focus {
+    .selection-option.selected {
       border-color: #fff;
       background: #333;
-      outline: none;
     }
 
     .option-label {
       display: block;
-      margin-top: 8px;
-      font-size: 20px;
+      margin-top: 7px;
+      font-size: 15px;
       font-weight: 400;
     }
 
     .selection-help {
-      margin-top: 45px;
-      font-size: 22px;
-      line-height: 1.5;
+      margin-top: 16px;
+      font-size: 18px;
+      line-height: 1.4;
       color: #ddd;
     }
 
     .counter-header {
       width: 100%;
-
       display: flex;
       justify-content: space-between;
-
-      font-size: 20px;
+      gap: 10px;
+      font-size: 18px;
       color: #ddd;
     }
 
     .main-values {
       width: 100%;
       flex: 1;
-
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       align-items: center;
@@ -127,7 +135,6 @@
 
     .value-label {
       margin-bottom: 15px;
-
       font-size: 18px;
       font-weight: 700;
       letter-spacing: 2px;
@@ -140,41 +147,28 @@
       white-space: nowrap;
     }
 
-    /*
-      Keeps values such as 312/312 large while fitting
-      inside the left column.
-    */
     #cardsDealt {
       transform: scaleX(0.75);
     }
 
     .counter-footer {
       width: 100%;
-
       font-size: 18px;
       line-height: 1.5;
       color: #ddd;
     }
 
-    /*
-      Visual confirmation that a gesture event reached
-      the webpage.
-    */
     .gesture-flash {
       position: absolute;
       inset: 0;
-
       display: flex;
       align-items: flex-start;
       justify-content: center;
-
       padding-top: 25px;
       border: 12px solid transparent;
-
       font-size: 30px;
       font-weight: 700;
       letter-spacing: 3px;
-
       opacity: 0;
       pointer-events: none;
     }
@@ -188,78 +182,74 @@
 </head>
 
 <body tabindex="0">
+  <!-- Both startup choices remain visible on one screen for Meta Display. -->
+  <main id="setupScreen" class="screen">
+    <h1>GAME SETUP</h1>
 
-  <!-- Deck-selection screen -->
-  <main id="deckSelectionScreen" class="screen">
-    <h1># OF DECKS</h1>
+    <section id="deckSection" class="setup-section active">
+      <div class="setup-label"># OF DECKS</div>
+      <div class="selection-options">
+        <button
+          class="selection-option deck-option selected"
+          data-decks="2"
+          type="button"
+          tabindex="-1"
+          aria-pressed="true"
+        >
+          2
+          <span class="option-label">DECKS</span>
+        </button>
 
-    <div class="selection-options">
-      <button
-        class="selection-option deck-option focusable selected"
-        data-decks="2"
-        type="button"
-        aria-pressed="true"
-      >
-        2
-        <span class="option-label">DECKS</span>
-      </button>
+        <button
+          class="selection-option deck-option"
+          data-decks="6"
+          type="button"
+          tabindex="-1"
+          aria-pressed="false"
+        >
+          6
+          <span class="option-label">DECKS</span>
+        </button>
+      </div>
+    </section>
 
-      <button
-        class="selection-option deck-option focusable"
-        data-decks="6"
-        type="button"
-        aria-pressed="false"
-      >
-        6
-        <span class="option-label">DECKS</span>
-      </button>
-    </div>
+    <section id="minimumSection" class="setup-section">
+      <div class="setup-label">TABLE MINIMUM</div>
+      <div class="selection-options">
+        <button
+          class="selection-option minimum-option selected"
+          data-minimum="15"
+          type="button"
+          tabindex="-1"
+          aria-pressed="true"
+        >
+          $15
+          <span class="option-label">MINIMUM</span>
+        </button>
 
-    <div class="selection-help">
-      Left or right to select<br>
-      Index tap to continue
+        <button
+          class="selection-option minimum-option"
+          data-minimum="25"
+          type="button"
+          tabindex="-1"
+          aria-pressed="false"
+        >
+          $25
+          <span class="option-label">MINIMUM</span>
+        </button>
+      </div>
+    </section>
+
+    <div id="setupHelp" class="selection-help">
+      Select decks with left or right<br>
+      Index tap for table minimum
     </div>
   </main>
 
-  <!-- Table-minimum selection screen -->
-  <main id="minimumSelectionScreen" class="screen" hidden>
-    <h1>TABLE MINIMUM</h1>
-
-    <div class="selection-options">
-      <button
-        class="selection-option minimum-option focusable selected"
-        data-minimum="15"
-        type="button"
-        aria-pressed="true"
-      >
-        $15
-        <span class="option-label">MINIMUM</span>
-      </button>
-
-      <button
-        class="selection-option minimum-option focusable"
-        data-minimum="25"
-        type="button"
-        aria-pressed="false"
-      >
-        $25
-        <span class="option-label">MINIMUM</span>
-      </button>
-    </div>
-
-    <div class="selection-help">
-      Left or right to select<br>
-      Index tap to start
-    </div>
-  </main>
-
-  <!-- Counter screen -->
   <main id="counterScreen" class="screen" hidden>
     <div class="counter-header">
       <span><strong id="deckCount">2</strong> decks</span>
-
       <span>Minimum: <strong id="tableMinimum">$15</strong></span>
-
       <span>
         Remaining:
         <strong id="decksRemaining">2.00</strong>
@@ -300,21 +290,33 @@
 
     let selectedDecks = 2;
     let selectedMinimum = 15;
-    let totalCards = selectedDecks * 52;
-
+    let totalCards = 104;
     let runningCount = 0;
     let cardsDealt = 0;
-    let currentScreen = "deck-selection";
+
+    let currentScreen = "setup";
+    let setupStep = "decks";
+    let screenShownAt = 0;
+    let suppressClicksUntil = 0;
     let flashTimer = null;
 
-    const deckSelectionScreen =
-      document.getElementById("deckSelectionScreen");
+    const ACTIVATION_LOCK_MS = 400;
+    const SYNTHETIC_CLICK_GUARD_MS = 650;
 
-    const minimumSelectionScreen =
-      document.getElementById("minimumSelectionScreen");
+    const setupScreen =
+      document.getElementById("setupScreen");
 
     const counterScreen =
       document.getElementById("counterScreen");
+
+    const deckSection =
+      document.getElementById("deckSection");
+
+    const minimumSection =
+      document.getElementById("minimumSection");
+
+    const setupHelp =
+      document.getElementById("setupHelp");
 
     const deckOptions =
       document.querySelectorAll(".deck-option");
@@ -349,26 +351,61 @@
       }
 
       const formatted = value.toFixed(decimalPlaces);
+      return value > 0 ? "+" + formatted : formatted;
+    }
 
-      if (value > 0) {
-        return "+" + formatted;
-      }
+    function activationIsLocked() {
+      return Date.now() - screenShownAt < ACTIVATION_LOCK_MS;
+    }
 
-      return formatted;
+    function guardAgainstSyntheticClick() {
+      suppressClicksUntil =
+        Date.now() + SYNTHETIC_CLICK_GUARD_MS;
+    }
+
+    function markStepChanged() {
+      screenShownAt = Date.now();
+      document.body.focus();
+    }
+
+    function updateDeckSelection() {
+      deckOptions.forEach(function (button) {
+        const isSelected =
+          Number(button.dataset.decks) === selectedDecks;
+
+        button.classList.toggle("selected", isSelected);
+        button.setAttribute("aria-pressed", String(isSelected));
+      });
+    }
+
+    function updateMinimumSelection() {
+      minimumOptions.forEach(function (button) {
+        const isSelected =
+          Number(button.dataset.minimum) === selectedMinimum;
+
+        button.classList.toggle("selected", isSelected);
+        button.setAttribute("aria-pressed", String(isSelected));
+      });
+    }
+
+    function updateSetupStep() {
+      const choosingDecks = setupStep === "decks";
+
+      deckSection.classList.toggle("active", choosingDecks);
+      minimumSection.classList.toggle("active", !choosingDecks);
+
+      setupHelp.innerHTML = choosingDecks
+        ? "Select decks with left or right<br>Index tap for table minimum"
+        : "Select minimum with left or right<br>Index tap to start";
+
+      markStepChanged();
     }
 
     function flashGesture(message) {
       clearTimeout(flashTimer);
-
       gestureFlash.textContent = message;
       gestureFlash.classList.remove("show");
-
-      /*
-        Forces the flash animation to restart when
-        gestures happen rapidly.
-      */
       void gestureFlash.offsetWidth;
-
       gestureFlash.classList.add("show");
 
       flashTimer = setTimeout(function () {
@@ -376,97 +413,24 @@
       }, 300);
     }
 
-    function updateDeckSelection() {
-      deckOptions.forEach(function (button) {
-        const buttonDecks =
-          Number(button.dataset.decks);
-
-        const isSelected =
-          buttonDecks === selectedDecks;
-
-        button.classList.toggle(
-          "selected",
-          isSelected
-        );
-
-        button.setAttribute(
-          "aria-pressed",
-          String(isSelected)
-        );
-
-        if (isSelected) {
-          button.focus({
-            preventScroll: true
-          });
-        }
-      });
-    }
-
-    function updateMinimumSelection() {
-      minimumOptions.forEach(function (button) {
-        const buttonMinimum =
-          Number(button.dataset.minimum);
-
-        const isSelected =
-          buttonMinimum === selectedMinimum;
-
-        button.classList.toggle(
-          "selected",
-          isSelected
-        );
-
-        button.setAttribute(
-          "aria-pressed",
-          String(isSelected)
-        );
-
-        if (isSelected) {
-          button.focus({
-            preventScroll: true
-          });
-        }
-      });
-    }
-
-    function showMinimumSelection() {
-      currentScreen = "minimum-selection";
-      deckSelectionScreen.hidden = true;
-      minimumSelectionScreen.hidden = false;
-      counterScreen.hidden = true;
-      updateMinimumSelection();
-    }
-
     function updateCounterDisplay() {
       const remainingCards =
         Math.max(totalCards - cardsDealt, 0);
 
-      const decksRemaining =
-        remainingCards / 52;
+      const decksRemaining = remainingCards / 52;
+      const trueCount = decksRemaining > 0
+        ? runningCount / decksRemaining
+        : null;
 
-      let trueCount = null;
-
-      if (decksRemaining > 0) {
-        trueCount =
-          runningCount / decksRemaining;
-      }
-
-      deckCountDisplay.textContent =
-        selectedDecks;
-
-      tableMinimumDisplay.textContent =
-        "$" + selectedMinimum;
-
+      deckCountDisplay.textContent = selectedDecks;
+      tableMinimumDisplay.textContent = "$" + selectedMinimum;
       cardsDealtDisplay.textContent =
         cardsDealt + "/" + totalCards;
-
       runningCountDisplay.textContent =
         formatSignedNumber(runningCount, 0);
-
-      trueCountDisplay.textContent =
-        trueCount === null
-          ? "—"
-          : formatSignedNumber(trueCount, 1);
-
+      trueCountDisplay.textContent = trueCount === null
+        ? "—"
+        : formatSignedNumber(trueCount, 1);
       decksRemainingDisplay.textContent =
         decksRemaining.toFixed(2);
     }
@@ -477,20 +441,16 @@
       cardsDealt = 0;
       currentScreen = "counter";
 
-      deckSelectionScreen.hidden = true;
-      minimumSelectionScreen.hidden = true;
+      setupScreen.hidden = true;
       counterScreen.hidden = false;
-
       updateCounterDisplay();
-      document.body.focus();
-
+      markStepChanged();
       flashGesture("START");
     }
 
     function resetShoe() {
       runningCount = 0;
       cardsDealt = 0;
-
       updateCounterDisplay();
       flashGesture("RESET");
     }
@@ -503,157 +463,167 @@
 
       runningCount += countValue;
       cardsDealt += 1;
-
       updateCounterDisplay();
       return true;
     }
 
-    function handleDeckSelectionInput(key) {
-      switch (key) {
-        case "ArrowLeft":
+    function handleSetupInput(key) {
+      if (setupStep === "decks") {
+        if (key === "ArrowLeft") {
           selectedDecks = 2;
           updateDeckSelection();
           return true;
+        }
 
-        case "ArrowRight":
+        if (key === "ArrowRight") {
           selectedDecks = 6;
           updateDeckSelection();
           return true;
+        }
 
-        case "Enter":
-          showMinimumSelection();
+        if (key === "Enter") {
+          if (activationIsLocked()) {
+            return true;
+          }
+
+          guardAgainstSyntheticClick();
+          setupStep = "minimum";
+          updateSetupStep();
           return true;
-
-        default:
-          return false;
-      }
-    }
-
-    function handleMinimumSelectionInput(key) {
-      switch (key) {
-        case "ArrowLeft":
+        }
+      } else {
+        if (key === "ArrowLeft") {
           selectedMinimum = 15;
           updateMinimumSelection();
           return true;
+        }
 
-        case "ArrowRight":
+        if (key === "ArrowRight") {
           selectedMinimum = 25;
           updateMinimumSelection();
           return true;
+        }
 
-        case "Enter":
+        if (key === "Enter") {
+          if (activationIsLocked()) {
+            return true;
+          }
+
+          guardAgainstSyntheticClick();
           startCounter();
           return true;
-
-        default:
-          return false;
+        }
       }
+
+      return false;
     }
 
     function handleCounterInput(key) {
-      switch (key) {
-        case "ArrowRight":
-          if (recordCard(1)) {
-            flashGesture("+1");
-          }
-          return true;
-
-        case "ArrowLeft":
-          if (recordCard(-1)) {
-            flashGesture("−1");
-          }
-          return true;
-
-        case "ArrowDown":
-          if (recordCard(0)) {
-            flashGesture("NEUTRAL");
-          }
-          return true;
-
-        case "Enter":
-          resetShoe();
-          return true;
-
-        default:
-          return false;
+      if (key === "ArrowRight") {
+        if (recordCard(1)) {
+          flashGesture("+1");
+        }
+        return true;
       }
+
+      if (key === "ArrowLeft") {
+        if (recordCard(-1)) {
+          flashGesture("−1");
+        }
+        return true;
+      }
+
+      if (key === "ArrowDown") {
+        if (recordCard(0)) {
+          flashGesture("NEUTRAL");
+        }
+        return true;
+      }
+
+      if (key === "Enter") {
+        resetShoe();
+        return true;
+      }
+
+      return false;
     }
 
-    document.addEventListener(
-      "keydown",
-      function (event) {
-        if (event.repeat) {
+    document.addEventListener("keydown", function (event) {
+      if (event.repeat) {
+        return;
+      }
+
+      const handled = currentScreen === "setup"
+        ? handleSetupInput(event.key)
+        : handleCounterInput(event.key);
+
+      if (handled) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    });
+
+    deckOptions.forEach(function (button) {
+      button.addEventListener("click", function (event) {
+        event.preventDefault();
+
+        if (
+          currentScreen !== "setup" ||
+          setupStep !== "decks" ||
+          activationIsLocked() ||
+          Date.now() < suppressClicksUntil
+        ) {
           return;
         }
 
-        let handled = false;
-
-        if (currentScreen === "deck-selection") {
-          handled =
-            handleDeckSelectionInput(event.key);
-        } else if (currentScreen === "minimum-selection") {
-          handled =
-            handleMinimumSelectionInput(event.key);
-        } else {
-          handled =
-            handleCounterInput(event.key);
-        }
-
-        if (handled) {
-          event.preventDefault();
-        }
-      }
-    );
-
-    deckOptions.forEach(function (button) {
-      button.addEventListener(
-        "click",
-        function () {
-          selectedDecks =
-            Number(button.dataset.decks);
-
-          updateDeckSelection();
-          showMinimumSelection();
-        }
-      );
+        selectedDecks = Number(button.dataset.decks);
+        updateDeckSelection();
+        setupStep = "minimum";
+        updateSetupStep();
+      });
     });
 
     minimumOptions.forEach(function (button) {
-      button.addEventListener(
-        "click",
-        function () {
-          selectedMinimum =
-            Number(button.dataset.minimum);
+      button.addEventListener("click", function (event) {
+        event.preventDefault();
 
-          updateMinimumSelection();
-          startCounter();
+        if (
+          currentScreen !== "setup" ||
+          setupStep !== "minimum" ||
+          activationIsLocked() ||
+          Date.now() < suppressClicksUntil
+        ) {
+          return;
         }
-      );
+
+        selectedMinimum = Number(button.dataset.minimum);
+        updateMinimumSelection();
+        startCounter();
+      });
     });
 
-    document.addEventListener(
-      "click",
-      function () {
-        if (currentScreen === "counter") {
-          document.body.focus();
-        }
-      }
-    );
+    document.addEventListener("click", function () {
+      window.setTimeout(function () {
+        document.body.focus();
+      }, 0);
+    });
 
-    window.addEventListener(
-      "load",
-      function () {
-        selectedDecks = 2;
-        selectedMinimum = 15;
-        currentScreen = "deck-selection";
+    window.addEventListener("load", function () {
+      selectedDecks = 2;
+      selectedMinimum = 15;
+      currentScreen = "setup";
+      setupStep = "decks";
 
-        deckSelectionScreen.hidden = false;
-        minimumSelectionScreen.hidden = true;
-        counterScreen.hidden = true;
+      setupScreen.hidden = false;
+      counterScreen.hidden = true;
 
-        updateDeckSelection();
-      }
-    );
+      updateDeckSelection();
+      updateMinimumSelection();
+      updateSetupStep();
+
+      screenShownAt = Date.now() - ACTIVATION_LOCK_MS;
+      document.body.focus();
+    });
   </script>
 </body>
 </html>
