@@ -35,12 +35,15 @@
     }
 
     .screen {
+      position: relative;
+
       width: 600px;
       height: 600px;
       max-width: 100vw;
       max-height: 100vh;
+
       margin: auto;
-      padding: 45px;
+      padding: 32px;
 
       display: flex;
       flex-direction: column;
@@ -48,6 +51,7 @@
       justify-content: center;
 
       text-align: center;
+      overflow: hidden;
     }
 
     h1 {
@@ -102,58 +106,83 @@
       display: flex;
       justify-content: space-between;
 
-      font-size: 21px;
+      font-size: 20px;
       color: #ddd;
     }
 
     .main-values {
+      width: 100%;
       flex: 1;
 
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       align-items: center;
-      justify-content: center;
-      gap: 65px;
+      gap: 8px;
     }
 
     .value-panel {
-      min-width: 190px;
+      min-width: 0;
+      overflow: visible;
     }
 
     .value-label {
-      margin-bottom: 12px;
+      margin-bottom: 15px;
 
-      font-size: 23px;
+      font-size: 18px;
       font-weight: 700;
-      letter-spacing: 3px;
+      letter-spacing: 2px;
     }
 
     .value {
-      font-size: 112px;
+      font-size: 64px;
       font-weight: 700;
       line-height: 1;
+      white-space: nowrap;
     }
 
-    #trueCount {
-      font-size: 90px;
+    /*
+      Keeps values such as 312/312 large while fitting
+      inside the left column.
+    */
+    #cardsDealt {
+      transform: scaleX(0.75);
     }
 
     .counter-footer {
       width: 100%;
 
-      display: flex;
-      justify-content: space-between;
-
-      font-size: 19px;
+      font-size: 18px;
+      line-height: 1.5;
       color: #ddd;
     }
 
-    #status {
-      margin-top: 25px;
-      min-height: 48px;
+    /*
+      Visual confirmation that a gesture event reached
+      the webpage.
+    */
+    .gesture-flash {
+      position: absolute;
+      inset: 0;
 
-      font-size: 19px;
-      line-height: 1.4;
-      color: #ddd;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+
+      padding-top: 25px;
+      border: 12px solid transparent;
+
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: 3px;
+
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .gesture-flash.show {
+      border-color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+      opacity: 1;
     }
   </style>
 </head>
@@ -196,10 +225,19 @@
   <main id="counterScreen" class="screen" hidden>
     <div class="counter-header">
       <span><strong id="deckCount">2</strong> decks</span>
-      <span>Remaining: <strong id="decksRemaining">2.00</strong></span>
+
+      <span>
+        Remaining:
+        <strong id="decksRemaining">2.00</strong>
+      </span>
     </div>
 
     <div class="main-values">
+      <section class="value-panel">
+        <div class="value-label">CARDS</div>
+        <div id="cardsDealt" class="value">0/104</div>
+      </section>
+
       <section class="value-panel">
         <div class="value-label">RUNNING</div>
         <div id="runningCount" class="value">0</div>
@@ -212,13 +250,15 @@
     </div>
 
     <div class="counter-footer">
-      <span>Cards: <strong id="cardsDealt">0 / 104</strong></span>
-      <span>Tap: reset</span>
+      Right: +1 &nbsp; Left: −1<br>
+      Down: neutral &nbsp; Tap: reset
     </div>
 
-    <div id="status">
-      Right: +1 &nbsp; Left: -1 &nbsp; Down: neutral
-    </div>
+    <div
+      id="gestureFlash"
+      class="gesture-flash"
+      aria-hidden="true"
+    ></div>
   </main>
 
   <script>
@@ -229,7 +269,8 @@
 
     let runningCount = 0;
     let cardsDealt = 0;
-    let screen = "selection";
+    let currentScreen = "selection";
+    let flashTimer = null;
 
     const selectionScreen =
       document.getElementById("selectionScreen");
@@ -255,8 +296,8 @@
     const cardsDealtDisplay =
       document.getElementById("cardsDealt");
 
-    const statusDisplay =
-      document.getElementById("status");
+    const gestureFlash =
+      document.getElementById("gestureFlash");
 
     function formatSignedNumber(value, decimalPlaces) {
       if (Math.abs(value) < 0.0001) {
@@ -270,6 +311,25 @@
       }
 
       return formatted;
+    }
+
+    function flashGesture(message) {
+      clearTimeout(flashTimer);
+
+      gestureFlash.textContent = message;
+      gestureFlash.classList.remove("show");
+
+      /*
+        Forces the flash animation to restart when
+        gestures happen rapidly.
+      */
+      void gestureFlash.offsetWidth;
+
+      gestureFlash.classList.add("show");
+
+      flashTimer = setTimeout(function () {
+        gestureFlash.classList.remove("show");
+      }, 300);
     }
 
     function updateDeckSelection() {
@@ -315,6 +375,9 @@
       deckCountDisplay.textContent =
         selectedDecks;
 
+      cardsDealtDisplay.textContent =
+        cardsDealt + "/" + totalCards;
+
       runningCountDisplay.textContent =
         formatSignedNumber(runningCount, 0);
 
@@ -325,30 +388,21 @@
 
       decksRemainingDisplay.textContent =
         decksRemaining.toFixed(2);
-
-      cardsDealtDisplay.textContent =
-        cardsDealt + " / " + totalCards;
-
-      if (remainingCards === 0) {
-        statusDisplay.textContent =
-          "Shoe complete. Index tap to reset.";
-      } else {
-        statusDisplay.innerHTML =
-          "Right: +1 &nbsp; Left: −1 &nbsp; Down: neutral";
-      }
     }
 
     function startCounter() {
       totalCards = selectedDecks * 52;
       runningCount = 0;
       cardsDealt = 0;
-      screen = "counter";
+      currentScreen = "counter";
 
       selectionScreen.hidden = true;
       counterScreen.hidden = false;
 
       updateCounterDisplay();
       document.body.focus();
+
+      flashGesture("START");
     }
 
     function resetShoe() {
@@ -356,17 +410,20 @@
       cardsDealt = 0;
 
       updateCounterDisplay();
+      flashGesture("RESET");
     }
 
     function recordCard(countValue) {
       if (cardsDealt >= totalCards) {
-        return;
+        flashGesture("SHOE COMPLETE");
+        return false;
       }
 
       runningCount += countValue;
       cardsDealt += 1;
 
       updateCounterDisplay();
+      return true;
     }
 
     function handleSelectionInput(key) {
@@ -393,15 +450,21 @@
     function handleCounterInput(key) {
       switch (key) {
         case "ArrowRight":
-          recordCard(1);
+          if (recordCard(1)) {
+            flashGesture("+1");
+          }
           return true;
 
         case "ArrowLeft":
-          recordCard(-1);
+          if (recordCard(-1)) {
+            flashGesture("−1");
+          }
           return true;
 
         case "ArrowDown":
-          recordCard(0);
+          if (recordCard(0)) {
+            flashGesture("NEUTRAL");
+          }
           return true;
 
         case "Enter":
@@ -422,7 +485,7 @@
 
         let handled = false;
 
-        if (screen === "selection") {
+        if (currentScreen === "selection") {
           handled =
             handleSelectionInput(event.key);
         } else {
@@ -452,7 +515,7 @@
     document.addEventListener(
       "click",
       function () {
-        if (screen === "counter") {
+        if (currentScreen === "counter") {
           document.body.focus();
         }
       }
@@ -462,7 +525,7 @@
       "load",
       function () {
         selectedDecks = 2;
-        screen = "selection";
+        currentScreen = "selection";
 
         selectionScreen.hidden = false;
         counterScreen.hidden = true;
