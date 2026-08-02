@@ -312,10 +312,16 @@
     let setupStep = "decks";
     let screenShownAt = 0;
     let suppressClicksUntil = 0;
+    let resetEnabledAt = 0;
     let flashTimer = null;
 
     const ACTIVATION_LOCK_MS = 400;
     const SYNTHETIC_CLICK_GUARD_MS = 650;
+
+    // Meta Display may emit both a click and an Enter event for one tap.
+    // Keep reset disarmed briefly after entering the counter so the
+    // setup-confirmation tap cannot immediately call resetShoe().
+    const RESET_ARM_DELAY_MS = 1500;
 
     const setupScreen =
       document.getElementById("setupScreen");
@@ -475,6 +481,7 @@
       runningCount = 0;
       cardsDealt = 0;
       currentScreen = "counter";
+      resetEnabledAt = Date.now() + RESET_ARM_DELAY_MS;
 
       setupScreen.hidden = true;
       counterScreen.hidden = false;
@@ -576,6 +583,12 @@
       }
 
       if (key === "Enter") {
+        // Consume duplicate activation events from the setup tap.
+        // A deliberate reset tap works normally after the short delay.
+        if (Date.now() < resetEnabledAt) {
+          return true;
+        }
+
         resetShoe();
         return true;
       }
@@ -648,6 +661,7 @@
       selectedMinimum = 15;
       currentScreen = "setup";
       setupStep = "decks";
+      resetEnabledAt = 0;
 
       setupScreen.hidden = false;
       counterScreen.hidden = true;
