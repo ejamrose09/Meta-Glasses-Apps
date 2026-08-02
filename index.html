@@ -2,11 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
   >
-  <title>True Count</title>
+  <title>True Count - Bet Ramp Color Flashes</title>
 
   <style>
     * {
@@ -119,52 +122,79 @@
       color: #ddd;
     }
 
+    /*
+      Explicit four-column flex layout for the Meta Display WebView.
+      Each panel owns exactly one quarter of the available width.
+    */
     .main-values {
       width: 100%;
       flex: 1;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-box-align: center;
+      -webkit-align-items: center;
       align-items: center;
-      gap: 6px;
+      overflow: hidden;
     }
 
     .value-panel {
+      -webkit-box-flex: 0;
+      -webkit-flex: 0 0 25%;
+      flex: 0 0 25%;
+      width: 25%;
+      max-width: 25%;
       min-width: 0;
-      overflow: visible;
+      padding: 0 2px;
+      overflow: hidden;
+      text-align: center;
     }
 
     .value-label {
-      margin-bottom: 15px;
-      font-size: 18px;
+      margin-bottom: 13px;
+      font-size: 14px;
       font-weight: 700;
-      letter-spacing: 2px;
-    }
-
-    .value {
-      font-size: 50px;
-      font-weight: 700;
-      line-height: 1;
+      letter-spacing: 1px;
       white-space: nowrap;
     }
 
+    .value {
+      width: 100%;
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-align: center;
+    }
+
     #cardsDealt {
-      transform: scaleX(0.68);
+      font-size: 34px;
+      letter-spacing: -2px;
     }
 
     #betAmount {
-      font-size: 46px;
-      transform: scaleX(0.90);
+      font-size: 40px;
+      letter-spacing: -1px;
     }
 
     #trueCount {
-      transform: scaleX(0.85);
+      font-size: 40px;
     }
 
     .counter-footer {
       width: 100%;
       font-size: 18px;
-      line-height: 1.5;
+      line-height: 1.4;
       color: #ddd;
+    }
+
+    .layout-version {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #aaa;
     }
 
     .gesture-flash {
@@ -183,9 +213,25 @@
     }
 
     .gesture-flash.show {
+      opacity: 1;
+    }
+
+    .gesture-flash.flash-positive {
+      border-color: #00ff66;
+      background: rgba(0, 255, 102, 0.18);
+      color: #00ff66;
+    }
+
+    .gesture-flash.flash-negative {
+      border-color: #ff3333;
+      background: rgba(255, 51, 51, 0.18);
+      color: #ff3333;
+    }
+
+    .gesture-flash.flash-neutral {
       border-color: #fff;
       background: rgba(255, 255, 255, 0.12);
-      opacity: 1;
+      color: #fff;
     }
   </style>
 </head>
@@ -278,7 +324,7 @@
 
       <section class="value-panel">
         <div class="value-label">BET</div>
-        <div id="betAmount" class="value">$0</div>
+        <div id="betAmount" class="value">$15</div>
       </section>
 
       <section class="value-panel">
@@ -289,7 +335,8 @@
 
     <div class="counter-footer">
       Right: +1 &nbsp; Left: −1<br>
-      Down: neutral &nbsp; Tap: reset
+      Down: neutral &nbsp; Tap: reset<br>
+      <span class="layout-version">BET RAMP + COLOR FLASH</span>
     </div>
 
     <div
@@ -424,10 +471,25 @@
       markStepChanged();
     }
 
-    function flashGesture(message) {
+    function flashGesture(message, tone) {
       clearTimeout(flashTimer);
+
       gestureFlash.textContent = message;
-      gestureFlash.classList.remove("show");
+      gestureFlash.classList.remove(
+        "show",
+        "flash-positive",
+        "flash-negative",
+        "flash-neutral"
+      );
+
+      if (tone === "positive") {
+        gestureFlash.classList.add("flash-positive");
+      } else if (tone === "negative") {
+        gestureFlash.classList.add("flash-negative");
+      } else {
+        gestureFlash.classList.add("flash-neutral");
+      }
+
       void gestureFlash.offsetWidth;
       gestureFlash.classList.add("show");
 
@@ -437,19 +499,41 @@
     }
 
     function calculateBetAmount(trueCount) {
-      if (trueCount === null || trueCount <= 0) {
-        return 0;
+      /*
+        Classroom example: a capped 1-to-8 unit betting ramp.
+        This is more realistic than multiplying the minimum by
+        the decimal true count, but it is not a universal strategy.
+
+        TC below +2: 1 unit
+        TC +2:       2 units
+        TC +3:       4 units
+        TC +4:       6 units
+        TC +5+:      8 units
+      */
+      if (trueCount === null) {
+        return selectedMinimum;
       }
 
-      // Use the same one-decimal value shown in the TRUE column.
-      const displayedTrueCount =
-        Number(trueCount.toFixed(1));
+      const wholeTrueCount = Math.floor(trueCount);
+      let units = 1;
 
-      const rawBet =
-        selectedMinimum * displayedTrueCount;
+      if (wholeTrueCount >= 5) {
+        units = 8;
+      } else if (wholeTrueCount === 4) {
+        units = 6;
+      } else if (wholeTrueCount === 3) {
+        units = 4;
+      } else if (wholeTrueCount === 2) {
+        units = 2;
+      }
 
-      // Keep the demonstration amount in $5 increments.
-      return Math.max(0, Math.round(rawBet / 5) * 5);
+      const rawBet = selectedMinimum * units;
+
+      // Preserve $5 increments for any future minimum options.
+      return Math.max(
+        selectedMinimum,
+        Math.round(rawBet / 5) * 5
+      );
     }
 
     function updateCounterDisplay() {
@@ -563,21 +647,21 @@
     function handleCounterInput(key) {
       if (key === "ArrowRight") {
         if (recordCard(1)) {
-          flashGesture("+1");
+          flashGesture("+1", "positive");
         }
         return true;
       }
 
       if (key === "ArrowLeft") {
         if (recordCard(-1)) {
-          flashGesture("−1");
+          flashGesture("−1", "negative");
         }
         return true;
       }
 
       if (key === "ArrowDown") {
         if (recordCard(0)) {
-          flashGesture("NEUTRAL");
+          flashGesture("NEUTRAL", "neutral");
         }
         return true;
       }
